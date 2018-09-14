@@ -115,4 +115,4 @@
         run;
     ods graphics off;
 
-*Next procuder
+*Next proc
