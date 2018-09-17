@@ -5,5 +5,5 @@ Purpose: The SMU_MSDS is a repository used to hold course material and code used
 Subjects: <br>
 MSSDS_6371 - Statistical Foundations <br>
 MSDS_6306 - Doing Data Science <br>
-SAS_Code <br>
-R_Code
+Function_Code <br>
+Data_Sets
