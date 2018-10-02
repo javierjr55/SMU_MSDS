@@ -1,1 +1,89 @@
 Code Book
+
+The following document contains detailed information about JSaldana_LiveSession5assignment.Rmd
+
+Data source(s)*:
+yob2015.txt = txt file containing most popular names of 2015
+yob2016.txt = txt file containing most popular names of 2016
+
+*true source of data is unknown. Data sets were provided by professor for instructional purposes*
+
+Variables (by order called):
+y2016 = used to store/call data from "yob2016.txt"
+typo = used to store/call misspelled name in "yob2016.txt"
+y2015 = used to store/call data from "yob2015.txt"
+final = used to store/call merged data from y2016 and y2015
+tf = used to store/call Top 10 Female Names
+
+------------------------------------------------ code to follow: --------------------------------------------------
+library(dplyr)
+library(tidyr)
+
+#read in data as data frame
+y2016 = as.data.frame(read.delim("yob2016.txt", 
+                                 header = FALSE, #no headers in data
+                                 sep = ";", #make ';' the delim
+                                 col.names = c("Name", "Sex", "Popularity"))) #name columns
+
+#display summary and structure
+summary(y2016)
+dput(y2016)
+
+#locate misspelled name and store it in variable
+typo = grep("yyy$", y2016$Name, value = TRUE)
+
+#remove entry from data frame
+y2016 = filter(y2016, y2016$Name != typo)
+
+
+
+#read in data as data frame 
+y2015 = as.data.frame(read.delim("yob2015.txt", 
+                                 header = FALSE, #no headers in data
+                                 sep = ",", #make ',' the delim
+                                 col.names = c("Name", "Sex", "Popularity"))) #name columns
+
+#display last 10 rows
+tail(y2015, 10)
+
+#it appears the last 10 rows are unpopular names and they are all male names
+#I guess the letter Z isn't very popular
+
+#merge data
+#name and sex were used since some names were popular amongst M and F
+final = merge.data.frame(y2015,y2016, by = c("Name", "Sex"))
+
+#rename columns
+colnames(final) = c("Name", "Sex", "2015 Popularity", "2016 Popularity")
+
+#verify no N/As in data
+unlist(lapply(final, function(x) any(is.na(x))))
+
+#convert to numeric
+final$`2015 Popularity` <- as.numeric(final$`2015 Popularity`)
+final$`2016 Popularity` <- as.numeric(final$`2016 Popularity`)
+
+#create new colum w/ totals of 2015 and 2016
+final$Total <- final$`2015 Popularity` + final$`2016 Popularity`
+
+#How many people were given popular names?
+sum(final$Total)
+
+#sort by most popular (descending)
+final = final[order(-final$Total),]
+
+#what are the 10 most popular names?
+head(final,10)
+
+#omit the males
+final = filter(final, final$Sex != "M")
+
+#display Top 10 female names
+tf <- head(final, 10)
+
+#delete all other columns except name and total
+tf[2:4] <- NULL
+
+#save to CSV
+write.csv(tf, file = "Top_10_Girl_Names.csv")
+----------------------------------------------- end of code ---------------------------------
