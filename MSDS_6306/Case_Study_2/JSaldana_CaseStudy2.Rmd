@@ -1,0 +1,205 @@
+---
+title: "Case_Study_2"
+author: "JSaldana_CaseStudy2"
+date: "December 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RCurl)
+library(leaps)
+library(ggplot2)
+library(ISLR)
+library(reshape)
+
+#Train set
+dfTrain <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/SMU_MSDS/master/MSDS_6306/Case_Study_2/CaseStudy2-data.csv"), header = TRUE)
+
+#Test set
+dfVal <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/SMU_MSDS/master/MSDS_6306/Case_Study_2/CaseStudy2Validation.csv"), header = TRUE)
+
+```
+
+Questions of Interest:
+What are (at least) the top 3 factors that contribute to attrition?
+```{r}
+#Code Attrition to Yes = 1 and No = 0
+dfTrain$Attrition <- ifelse(dfTrain$Attrition == "Yes", 1, ifelse(dfTrain$Attrition == "No", 0, 99))
+
+#Cancel out variables w/ only 1 level or that are irrelevant/redundant
+dfTrain$ID <- NULL
+dfTrain$EmployeeCount <- NULL
+dfTrain$EmployeeNumber <- NULL
+dfTrain$Over18 <- NULL
+dfTrain$StandardHours <- NULL
+dfTrain$Rand <- NULL
+
+#This leaves 31 variables, 1 of which is the dependent
+regfit.full = regsubsets(Attrition~., dfTrain, nvmax = 30)
+reg.summary <- summary(regfit.full)
+plot(reg.summary$rsq,xlab = "Number of Variables", ylab = "RSquare", type = "l")
+plot(reg.summary$rss,xlab = "Number of Variables", ylab = "RSS", type = "l")
+```
+
+###Variable Selection
+In the plots above for R-Squared and Sum of Squared Redsiduals, we can see that as we add variables, the model begins to get more accurate but then levels off. We want to develop the most efficient and effective model possible.
+
+```{r}
+## get best performing models according to each measure
+ind.rss <- which.min(reg.summary$rss)
+val.rss <- reg.summary$rss[ind.rss]
+ind.adjr2 <- which.max(reg.summary$adjr2)
+val.adjr2 <- reg.summary$adjr2[ind.adjr2]
+ind.r2 <- which.max(reg.summary$rsq)
+val.r2 <- reg.summary$rsq[ind.r2]
+ind.cp <- which.min(reg.summary$cp)
+val.cp <- reg.summary$cp[ind.cp]
+ind.bic <- which.min(reg.summary$bic)
+val.bic <- reg.summary$bic[ind.bic]
+
+
+fit.models <- data.frame(x = 1:30, rss = reg.summary$rss, adjr2 = reg.summary$adjr2,
+                         r2 = reg.summary$rsq, cp = reg.summary$cp, bic = reg.summary$bic)
+fit.models <- melt(fit.models, id.vars = 'x')
+
+best.vals  <- data.frame(variable = unique(fit.models$variable), 
+                         inds = c(ind.rss, ind.adjr2, ind.r2, ind.cp, ind.bic),
+                         vals = c(val.rss, val.adjr2, val.r2, val.cp, val.bic)) 
+
+ggplot(data = fit.models, aes(x = x, y = value)) + geom_line(color = 'steelblue') + 
+  geom_point(data = best.vals, aes(x = inds, y = vals),color = 'red') +
+  facet_grid(variable ~., scales="free_y") + theme_bw()
+```
+
+We can see that 16 appears to be the most efficient spot in right as the curve begins to level off in the BIC plot. All other elements use 29, which is too high of a point for efficiency. So we look at the 16 variables with the lowest BIC.
+```{r}
+#Selected Variables
+coef(regfit.full,16)
+```
+
+Using the same plot as before, we can see that 7 is also a good number to use where BIC curve begins. 
+```{r}
+#narrow down to 7
+coef(regfit.full,7)
+```
+
+Now we turn to the 3 most impactful vairables.
+```{r}
+#narrow down to 3
+coef(regfit.full,3)
+```
+With these results, we can beging to build a model to see whether 16, 7, or 3 variables is the most accurate and efficient. 
+
+
+###Build and compare 3 models
+We build the first model with 16 variables and look to see how accurate it is.  
+```{r}
+#build the model
+lm1 = glm(Attrition ~ Department + EducationField + JobRole + MaritalStatus + OverTime + BusinessTravel + DistanceFromHome +EnvironmentSatisfaction + JobInvolvement + JobLevel + NumCompaniesWorked + TotalWorkingYears + YearsInCurrentRole, data = dfTrain, family = binomial(link = 'logit'))
+
+#View results
+summary(lm1)
+
+#get predictions
+dfPreds1 <- predict(lm1, type = "response", newdata = subset(dfVal, select = c("Department", "EducationField", "JobRole", "MaritalStatus", "OverTime", "BusinessTravel", "DistanceFromHome", "EnvironmentSatisfaction", "JobInvolvement", "JobLevel", "NumCompaniesWorked", "TotalWorkingYears", "YearsInCurrentRole")))
+
+#test the model's accuracy
+new.preds1 <-ifelse(dfPreds1 > 0.5, "Yes", "No")
+misClasificError1 <- mean(new.preds1 != dfVal$Attrition)
+print(paste('Accuracy',1-misClasificError1))
+```
+
+Now we look at the 7 variables with the lowest BIC to build and test the model.  
+```{r}
+#build the model
+lm2 = glm(Attrition ~ JobRole + MaritalStatus + OverTime + BusinessTravel + DistanceFromHome + EnvironmentSatisfaction + JobInvolvement + NumCompaniesWorked, data = dfTrain, family = binomial(link = 'logit'))
+
+#view results
+summary(lm2)
+
+#get predictions
+dfPreds2 <- predict(lm2, type = "response", newdata = subset(dfVal, select = c("JobRole", "MaritalStatus", "OverTime", "BusinessTravel", "DistanceFromHome", "EnvironmentSatisfaction", "JobInvolvement", "NumCompaniesWorked")))
+
+#test for accuracy
+new.preds2 <-ifelse(dfPreds2 > 0.5, "Yes", "No")
+misClasificError2 <- mean(new.preds2 != dfVal$Attrition)
+print(paste('Accuracy',1-misClasificError2))
+```
+
+Small sacrifice in accuracy, however we are now using less than hal of the variables from the original model. Let's look at the 3 variables with the lowest BIC.  
+
+```{r}
+#build the model
+lm3 = glm(Attrition ~ JobRole + MaritalStatus + OverTime, data = dfTrain, family = binomial(link = 'logit'))
+
+#View results
+summary(lm3)
+
+#Get predictions
+dfPreds3 <- predict(lm3, type = "response", newdata = subset(dfVal, select = c("JobRole", "MaritalStatus", "OverTime")))
+
+#test for accuracy
+new.preds3 <-ifelse(dfPreds3 > 0.5, "Yes", "No")
+misClasificError3 <- mean(new.preds3 != dfVal$Attrition)
+print(paste('Accuracy',1-misClasificError3))
+
+#export preds and ID to new sheet
+new.preds3 <- as.data.frame(new.preds3)
+
+dfPreds <- cbind(dfVal$ID, new.preds3)
+write.csv(dfPreds, file = "dfPreds.csv")
+
+```
+
+Based on these outputs, we can see that the 3rd model is by far the most efficient and effective. It only uses 3 variables and at the price of 2% less accuracy from the original model. 
+
+In the model, we see that Sales Reps and Lab Techs are the ones most prone to leaving the company. So we put these under the microscope to figure out exactly what is it about these two roles that makes them different.
+```{r}
+#Code for Sales Representatives
+dfTrain$JobRole <- ifelse(dfTrain$JobRole == "Sales Representative", 1, ifelse(dfTrain$JobRole == "Laboratory Technician", 0, 99))
+dfTrain$JobRole <- as.factor(dfTrain$JobRole)
+
+regfit.full.jr = regsubsets(JobRole ~ ., dfTrain, nvmax = 30)
+reg.summary.jr <- summary(regfit.full.jr)
+plot(reg.summary.jr$rsq,xlab = "Number of Variables", ylab = "RSquare", type = "l")
+plot(reg.summary.jr$rss,xlab = "Number of Variables", ylab = "RSS", type = "l")
+
+## get best performing models according to each measure
+jr.ind.rss <- which.min(reg.summary.jr$rss)
+jr.val.rss <- reg.summary.jr$rss[jr.ind.rss]
+jr.ind.adjr2 <- which.max(reg.summary.jr$adjr2)
+jr.val.adjr2 <- reg.summary.jr$adjr2[jr.ind.adjr2]
+jr.ind.r2 <- which.max(reg.summary.jr$rsq)
+jr.val.r2 <- reg.summary.jr$rsq[jr.ind.r2]
+jr.ind.cp <- which.min(reg.summary.jr$cp)
+jr.val.cp <- reg.summary.jr$cp[jr.ind.cp]
+jr.ind.bic <- which.min(reg.summary.jr$bic)
+jr.val.bic <- reg.summary.jr$bic[jr.ind.bic]
+
+
+fit.models.jr <- data.frame(x = 1:30, rss = reg.summary.jr$rss, adjr2 = reg.summary.jr$adjr2,
+                         r2 = reg.summary.jr$rsq, cp = reg.summary.jr$cp, bic = reg.summary.jr$bic)
+fit.models.jr <- melt(fit.models.jr, id.vars = 'x')
+
+best.vals  <- data.frame(variable = unique(fit.models$variable), 
+                         inds = c(jr.ind.rss, jr.ind.adjr2, jr.ind.r2, jr.ind.cp, jr.ind.bic),
+                         vals = c(jr.val.rss, jr.val.adjr2, jr.val.r2, jr.val.cp, jr.val.bic)) 
+
+ggplot(data = fit.models.jr, aes(x = x, y = value)) + geom_line(color = 'steelblue') + 
+  geom_point(data = best.vals, aes(x = inds, y = vals),color = 'red') +
+  facet_grid(variable ~., scales="free_y") + theme_bw()
+
+#Selected Variables
+coef(regfit.full.jr,5)
+
+#build model
+lm1.jr = glm(JobRole ~ Attrition + Department + JobLevel + OverTime + TrainingTimesLastYear, data = dfTrain, family = binomial(link = 'logit'))
+
+summary(lm1.jr)
+
+```
+Based on the output, we can see job level, over time, and training times last year all are statistically significant variables in trying to distinguish these two groups from each other. Futher research would be recommended to try and figure out more about these variables and in order to gain a better undestanding since it is clear that only overtime is the variable that has a major impact also on attrition.
+
+
+Bonus: Highest accuracy model
