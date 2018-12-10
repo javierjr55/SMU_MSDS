@@ -1,1 +1,10 @@
 This folder contains material used for Case Study 2 as part of SMU's MSDS 6306 course.
+
+This project uses the given data sets in this folder to attempt to build a model and predict attrition based on selected variables.
+The data set includes 37 variables and over 1100 observations.
+
+Subset function was performed on the data set and the variables with the lowerst BIC were selected to develop the primary model.
+From there the model was adjusted to 7 and then once again to 3 variables in order to maximize efficiency and effectiveness. 
+
+The results showes that the first model was 86% accurate and the final model was 84% accurate, which is great considering it was only
+using a fraction of the avaiable variables.
