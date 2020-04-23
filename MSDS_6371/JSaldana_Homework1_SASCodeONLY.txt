@@ -1,0 +1,84 @@
+data Cash_OnHand;
+input school cash; *0 is SMU and 1 is Seattle U;
+datalines;
+0 34
+0 1200
+0 23
+0 50
+0 60
+0 50
+0 0
+0 0
+0 30
+0 89
+0 0
+0 300
+0 400
+0 20
+0 10
+0 0
+1 20
+1 10
+1 5
+1 0
+1 30
+1 50
+1 0
+1 100
+1 110
+1 0
+1 40
+1 10
+1 3
+1 0
+;
+proc sort data = cash_onhand;
+by school;
+run;
+
+proc univariate data = cash_onhand;
+by school;
+var cash;
+histogram cash;
+run;
+
+proc ttest data = cash_onhand;
+class school;
+var cash;
+run;
+
+ods output off;
+ods exclude all;
+
+proc iml;
+use cash_onhand;
+read all var{school cash} into x;
+p = t(ranperm(x[,2],1000));
+paf=x[,1]||p; 
+create newds from paf;
+append from paf;
+quit;
+
+ods output conflimits=diff;
+proc ttest data=newds plots=none;
+class col1;
+var col2 - col1001;
+run;
+
+ods output on;
+ods exclude none;
+
+proc univariate data=diff;
+where method="Pooled";
+var mean;
+histogram mean;
+run;
+
+data numdiffs;
+set diff;
+where method = "Pooled";
+if abs(mean) >= 114.6;
+
+proc print data = numdiffs;
+where method = "Pooled";
+run;

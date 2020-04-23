@@ -1,0 +1,34 @@
+Which items to give the promotions on :
+
+
+
+
+create or replace view QtyByItemByCust as
+(
+select 
+sum(ol.Quantity)  Qty ,
+ol.Item_ItemNumber ItemNumber , 
+oh.CustomerTable_CustomerID CustomerID
+ from 
+OrderHeader as oh , 
+OrderLine as ol 
+where 
+oh.OrderNumber=ol.OrderHeader_OrderNumber
+group by 
+ol.Item_ItemNumber ,   oh.CustomerTable_CustomerID
+) ;
+
+
+select * from QtyByItemByCust;
+
+select
+A.Qty , A.CustomerID , B.ItemNumber
+from
+(
+select max(Qty)  Qty,CustomerID
+from QtyByItemByCust 
+group by CustomerID ) as A  ,
+QtyByItemByCust as B 
+where 
+A.Qty = B.Qty and 
+A.CustomerID = B.CustomeriD;

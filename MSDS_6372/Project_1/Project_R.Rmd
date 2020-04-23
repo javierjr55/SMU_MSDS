@@ -1,0 +1,2793 @@
+---
+title: "MSDS_7330_Project"
+author: "Javier Saldaña"
+date: "February 4, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RCurl)
+library(dplyr)
+library(tidyr)
+library(forecast)
+library(ggplot2)
+library(dygraphs)
+library(leaps)
+library(ISLR)
+library(reshape)
+```
+
+##Data Description
+
+The data used for this project was sourced from finance.yahoo.com. There are over 440 data sets for various companies in the S&P 500 index. Each data set contains the following fields:
+"Date"  "Open"  "High"  "Low" "Close" "Adj Close" "Volume"
+
+The "Date" field contains entries for every day the stock was active. It beings from the earliest date on record and ends on Feb. 1, 2019, which is the last day the market was open before the data set was extracted.
+
+The "Open" field pertains to the stock price at the point the market opened.
+
+The "High" field pertains to the maximum stock price for that day.
+
+The "Low" field pertains to the minimum stock price for that day.
+
+The "Close" field pertains to the stock price at the point the market closed for the day.
+
+The "Adj Close" field displays the closing price of the stock during after-hours trading
+
+```{r}
+#A
+SP500 <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/A.csv"), header = TRUE) [ ,1:2]
+colnames(SP500)[2] <- "A"
+
+#AAL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AAL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AAL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#AAP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AAP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AAP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#AAPL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AAPL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AAPL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#ABC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ABC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ABC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#ABMD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ABMD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ABMD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#ABT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ABT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ABT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#ACN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ACN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ACN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#ADBE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ADBE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ADBE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+#ADI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ADI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ADI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ADM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ADM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ADM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ADP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ADP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ADP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ADS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ADS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ADS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ADSK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ADSK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ADSK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AEE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AEE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AEE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AEP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AEP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AEP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AES
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AES.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AES"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AFL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AFL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AFL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AGN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AGN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AGN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AIG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AIG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AIG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AIV
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AIV.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AIV"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AIZ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AIZ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AIZ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AJG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AJG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AJG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AKAM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AKAM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AKAM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ALB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ALB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ALB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ALGN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ALGN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ALGN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ALK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ALK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ALK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ALL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ALL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ALL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ALXN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ALXN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ALXN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AMAT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AMAT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AMAT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AMD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AMD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AMD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AME
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AME.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AME"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AMG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AMG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AMG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AMGN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AMGN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AMGN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AMP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AMP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AMP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AMT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AMT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AMT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AMZN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AMZN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AMZN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ANSS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ANSS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ANSS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ANTM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ANTM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ANTM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AON
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AON.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AON"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AOS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AOS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AOS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#APA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/APA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "APA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#APC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/APC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "APC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#APD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/APD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "APD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#APH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/APH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "APH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ARE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ARE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ARE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ARNC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ARNC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ARNC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ATVI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ATVI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ATVI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AVB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AVB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AVB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AVY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AVY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AVY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AWK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AWK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AWK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AXP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AXP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AXP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#AZO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/AZO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "AZO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BAC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BAC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BAC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BAX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BAX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BAX"
+stock<-stock[-(which(stock$BAX == "null")),] #remove manual null values
+stock$BAX <- as.numeric(as.character(stock$BAX)) #convert to numeric
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BBT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BBT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BBT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BBY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BBY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BBY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BDX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BDX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BDX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BEN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BEN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BEN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BF-B
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BF-B.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BF-B"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BHGE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BHGE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BHGE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BIIB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BIIB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BIIB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BKNG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BKNG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BKNG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BLK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BLK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BLK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BLL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BLL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BLL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BMY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BMY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BMY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BRK-B
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BRK-B.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BRK-B"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BSX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BSX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BSX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BWA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BWA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BWA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#BXP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/BXP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "BXP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#C
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/C.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "C"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CAG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CAG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CAG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CAH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CAH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CAH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CAT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CAT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CAT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CBRE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CBRE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CBRE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CBS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CBS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CBS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CCI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CCI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CCI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CCL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CCL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CCL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CDNS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CDNS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CDNS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CELG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CELG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CELG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CERN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CERN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CERN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CFG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CFG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CFG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CHD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CHD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CHD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CHRW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CHRW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CHRW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CINF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CINF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CINF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CLX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CLX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CLX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CMA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CMA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CMA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CMCSA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CMCSA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CMCSA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CME
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CME.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CME"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CMG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CMG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CMG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CMI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CMI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CMI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CMS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CMS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CMS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CNC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CNC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CNC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CNP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CNP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CNP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#COF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/COF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "COF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#COG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/COG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "COG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#COO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/COO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "COO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#COP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/COP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "COP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#COST
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/COST.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "COST"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CPB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CPB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CPB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CPRT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CPRT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CPRT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CRM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CRM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CRM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CSCO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CSCO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CSCO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CSX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CSX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CSX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CTAS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CTAS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CTAS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CTL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CTL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CTL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CTSH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CTSH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CTSH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CTXS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CTXS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CTXS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CVS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CVS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CVS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#CVX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/CVX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "CVX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#D
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/D.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "D"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DHI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DHI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DHI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DHR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DHR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DHR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DIS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DIS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DIS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DISCA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DISCA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DISCA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DISH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DISH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DISH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DLTR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DLTR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DLTR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DOV
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DOV.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DOV"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DRE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DRE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DRE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DRI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DRI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DRI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DTE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DTE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DTE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DUK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DUK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DUK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DVA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DVA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DVA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DVN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DVN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DVN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DWDP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DWDP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DWDP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#DXC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/DXC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DXC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EBAY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EBAY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EBAY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ECL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ECL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ECL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ED
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ED.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ED"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EFX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EFX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EFX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EIX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EIX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EIX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EMN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EMN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EMN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EMR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EMR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EMR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EOG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EOG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EOG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EQIX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EQIX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EQIX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EQR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EQR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EQR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ES
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ES.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ES"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ESS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ESS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ESS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ETFC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ETFC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ETFC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ETN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ETN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ETN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ETR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ETR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ETR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EXC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EXC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EXC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EXPD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EXPD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EXPD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EXPE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EXPE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EXPE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#EXR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/EXR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "EXR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#F
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/F.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "F"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FAST
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FAST.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FAST"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FCX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FCX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FCX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FDX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FDX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FDX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FFIV
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FFIV.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FFIV"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FIS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FIS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FIS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FISV
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FISV.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FISV"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FITB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FITB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FITB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FLIR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FLIR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FLIR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FLR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FLR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FLR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FLS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FLS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FLS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FMC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FMC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FMC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FOX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FOX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FOX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FOXA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FOXA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FOXA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FRT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FRT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FRT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#FTI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/FTI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "FTI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GILD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GILD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GILD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GIS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GIS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GIS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GLW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GLW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GLW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GOOG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GOOG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GOOG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GPC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GPC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GPC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GPN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GPN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GPN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GPS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GPS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GPS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GRMN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GRMN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GRMN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#GWW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/GWW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GWW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HAL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HAL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HAL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HAS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HAS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HAS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HBAN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HBAN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HBAN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HBI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HBI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HBI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HCP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HCP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HCP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HES
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HES.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HES"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HFC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HFC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HFC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HIG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HIG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HIG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HOG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HOG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HOG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HOLX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HOLX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HOLX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HON
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HON.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HON"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HPQ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HPQ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HPQ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HRB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HRB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HRB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HRL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HRL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HRL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HRS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HRS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HRS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HSIC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HSIC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HSIC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HST
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HST.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HST"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HSY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HSY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HSY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#HUM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/HUM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "HUM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IBM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IBM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IBM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ICE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ICE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ICE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IDXX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IDXX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IDXX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IFF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IFF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IFF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ILMN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ILMN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ILMN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#INCY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/INCY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "INCY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#INTC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/INTC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "INTC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#INTU
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/INTU.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "INTU"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IPG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IPG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IPG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IPGP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IPGP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IPGP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IRM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IRM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IRM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ISRG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ISRG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ISRG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ITW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ITW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ITW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#IVZ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/IVZ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IVZ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JBHT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JBHT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JBHT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JCI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JCI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JCI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JEC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JEC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JEC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JEF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JEF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JEF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JKHY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JKHY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JKHY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JNJ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JNJ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JNJ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JNPR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JNPR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JNPR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JPM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JPM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JPM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#JWN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/JWN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "JWN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#K
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/K.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "K"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KEY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KEY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KEY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KIM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KIM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KIM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KLAC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KLAC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KLAC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KMB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KMB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KMB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KMX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KMX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KMX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KSS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KSS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KSS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#KSU
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/KSU.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "KSU"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#L
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/L.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "L"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LEG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LEG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LEG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LEN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LEN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LEN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LKQ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LKQ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LKQ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LLL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LLL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LLL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LLY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LLY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LLY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LMT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LMT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LMT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LNC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LNC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LNC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LNT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LNT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LNT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LOW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LOW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LOW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LRCX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LRCX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LRCX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#LUV
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/LUV.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "LUV"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#M
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/M.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "M"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MAA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MAA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MAA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MAC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MAC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MAC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MAR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MAR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MAR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MAS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MAS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MAS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MAT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MAT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MAT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MCD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MCD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MCD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MCHP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MCHP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MCHP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MCK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MCK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MCK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MCO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MCO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MCO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MDLZ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MDLZ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MDLZ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MDT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MDT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MDT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MET
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MET.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MET"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MGM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MGM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MGM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MHK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MHK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MHK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MKC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MKC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MKC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MLM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MLM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MLM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MMC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MMC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MMC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MMM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MMM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MMM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MNST
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MNST.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MNST"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MOS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MOS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MOS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MRK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MRK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MRK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MRO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MRO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MRO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MSFT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MSFT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MSFT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MSI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MSI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MSI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MTB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MTB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MTB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MTD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MTD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MTD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MU
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MU.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MU"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MXIM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MXIM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MXIM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#MYL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/MYL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "MYL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NBL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NBL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NBL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NDAQ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NDAQ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NDAQ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NEE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NEE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NEE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NEM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NEM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NEM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NFLX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NFLX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NFLX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NFX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NFX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NFX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NKE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NKE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NKE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NKTR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NKTR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NKTR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NOC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NOC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NOC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NOV
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NOV.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NOV"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NRG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NRG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NRG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NTAP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NTAP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NTAP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NTRS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NTRS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NTRS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NUE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NUE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NUE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NVDA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NVDA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NVDA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#NWL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/NWL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "NWL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#O
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/O.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "O"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#OKE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/OKE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "OKE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#OMC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/OMC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "OMC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ORCL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ORCL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ORCL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ORLY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ORLY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ORLY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#OXY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/OXY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "OXY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PAYX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PAYX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PAYX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PBCT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PBCT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PBCT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PCAR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PCAR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PCAR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PEG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PEG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PEG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PEP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PEP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PEP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PFE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PFE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PFE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PFG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PFG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PFG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PHM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PHM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PHM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PKG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PKG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PKG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PKI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PKI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PKI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PLD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PLD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PLD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PNC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PNC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PNC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PNR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PNR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PNR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PNW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PNW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PNW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PPL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PPL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PPL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PRGO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PRGO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PRGO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PRU
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PRU.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PRU"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PSA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PSA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PSA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PVH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PVH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PVH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PWR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PWR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PWR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#PXD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/PXD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "PXD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#QCOM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/QCOM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "QCOM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RCL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RCL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RCL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#REG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/REG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "REG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#REGN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/REGN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "REGN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RHI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RHI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RHI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RHT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RHT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RHT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RJF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RJF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RJF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RMD
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RMD.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RMD"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ROK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ROK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ROK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ROL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ROL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ROL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ROP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ROP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ROP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ROST
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ROST.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ROST"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RSG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RSG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RSG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#RTN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/RTN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "RTN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SBAC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SBAC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SBAC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SBUX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SBUX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SBUX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SCHW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SCHW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SCHW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SEE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SEE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SEE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SHW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SHW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SHW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SIVB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SIVB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SIVB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SJM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SJM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SJM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SLB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SLB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SLB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SLG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SLG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SLG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SNA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SNA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SNA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SNPS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SNPS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SNPS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SPG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SPG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SPG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SPGI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SPGI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SPGI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SRE
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SRE.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SRE"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#STI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/STI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "STI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#STT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/STT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "STT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#STX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/STX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "STX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#STZ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/STZ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "STZ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SWK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SWK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SWK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SWKS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SWKS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SWKS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SYF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SYF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SYF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SYK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SYK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SYK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SYMC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SYMC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SYMC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#SYY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/SYY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "SYY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#T
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/T.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "T"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TAP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TAP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TAP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TDG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TDG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TDG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TFX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TFX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TFX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TGT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TGT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TGT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TIF
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TIF.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TIF"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TJX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TJX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TJX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TMK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TMK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TMK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TMO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TMO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TMO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TPR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TPR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TPR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TROW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TROW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TROW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TRV
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TRV.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TRV"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TSCO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TSCO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TSCO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TSN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TSN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TSN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TSS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TSS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TSS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TTWO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TTWO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TTWO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TXN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TXN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TXN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#TXT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/TXT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "TXT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UAA
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UAA.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UAA"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UAL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UAL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UAL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UDR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UDR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UDR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UHS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UHS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UHS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UNH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UNH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UNH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UNM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UNM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UNM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UNP
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UNP.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UNP"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UPS
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UPS.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UPS"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#URI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/URI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "URI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#USB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/USB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "USB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#UTX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/UTX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "UTX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VAR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VAR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VAR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VFC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VFC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VFC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VIAB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VIAB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VIAB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VLO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VLO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VLO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VMC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VMC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VMC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VNO
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VNO.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VNO"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VRSN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VRSN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VRSN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VRTX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VRTX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VRTX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VTR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VTR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VTR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#VZ
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/VZ.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "VZ"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WAT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WAT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WAT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WCG
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WCG.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WCG"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WDC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WDC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WDC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WEC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WEC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WEC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WELL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WELL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WELL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WFC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WFC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WFC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WHR
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WHR.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WHR"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WLTW
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WLTW.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WLTW"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WMB
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WMB.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WMB"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WMT
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WMT.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WMT"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WRK
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WRK.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WRK"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WU
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WU.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WU"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#WYNN
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/WYNN.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "WYNN"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#XEC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/XEC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "XEC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#XEL
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/XEL.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "XEL"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#XLNX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/XLNX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "XLNX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#XOM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/XOM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "XOM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#XRAY
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/XRAY.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "XRAY"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#XRX
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/XRX.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "XRX"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#YUM
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/YUM.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "YUM"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ZBH
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ZBH.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ZBH"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#ZION
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/ZION.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "ZION"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#^DJI
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/^DJI.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "DJI"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#^GSPC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/^GSPC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "GSPC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+
+#^IXIC
+stock <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6372_Project/master/Financial_Data/^IXIC.csv"), header = TRUE) [ ,1:2]
+colnames(stock)[2] <- "IXIC"
+SP500 <- merge(SP500, stock, by = "Date", all = TRUE)
+
+```
+
+Remove excess dates not necessary for for analysis
+```{r}
+#convert date to DATE object
+SP500$Date = as.Date(SP500$Date)
+
+#sort by ascending date
+SP500 = arrange(SP500, Date)
+
+#keep only data between 2002 and 2009
+SP500 = filter(SP500, SP500$Date >= "2002-1-1" & SP500$Date < "2010-1-1")
+```
+Need stock companies with highest coefficients for the following indexes. 1 model per index.
+^DJI (Dow Jones)
+^GSPC (S&P 500)
+^IXIC (Nasdaq)
+
+```{r}
+#Converting data frame with financial data to a time series
+Index.ts<- ts(SP500)
+
+#Plot Dow Jones
+ggplot(data = SP500, aes(x = Date, y = DJI)) +
+  geom_line(color = "#00AFBB", size = 1) +
+  stat_smooth(
+    color = "#FC4E07", fill = "#FC4E07",
+    method = "loess"
+  )
+
+#Plot S&P 500
+ggplot(data = SP500, aes(x = Date, y = GSPC)) +
+  geom_line(color = "#00AFBB", size = 1) +
+  stat_smooth(
+    color = "#FC4E07", fill = "#FC4E07",
+    method = "loess"
+  )
+
+#Plot NASDAQ
+ggplot(data = SP500, aes(x = Date, y = IXIC)) +
+  geom_line(color = "#00AFBB", size = 1) +
+  stat_smooth(
+    color = "#FC4E07", fill = "#FC4E07",
+    method = "loess"
+  )
+
+
+# Separating indexes time serires data
+#DJI  <- window(Index.ts[,445]) #Dow Jones
+#GSPC <- window(Index.ts[,446]) #S&P 500
+#IXIC <- window(Index.ts[,447]) #NASDAQ
+
+decompose_DJI <-decompose(DJI)
+plot(decompose_DJI)
+
+decompose_GSPC <-decompose(GSPC)
+plot(decompose_GSPC)
+
+decompose_IXIC <-decompose(IXIC)
+plot(decompose_IXIC)
+
+fitholtdji <- holt(djits, alpha=.8, beta=.2, initial="simple", exponential=TRUE, h=5)
+plot(fitholtdji, ylab="Daily Closing Price", xlab="Year",col="#377EB8", main="DJI Fit Holt Trend Method", fcol="red")
+abline(v = 1997, untf = FALSE, col = "red")
+accuracy(fitholtdji)
+fitholtdji$model
+
+fitholtGSPC <- holt(GSPCts, alpha=.8, beta=.2, initial="simple", exponential=TRUE, h=5)
+plot(fitholtGSPC, ylab="Daily Closing Price", xlab="Year",col="#377EB8", main="GSPC Fit Holt Trend Method", fcol="red")
+abline(v = 1997, untf = FALSE, col = "red")
+accuracy(fitholtGSPC)
+fitholtGSPC$model
+
+fitholtIXIC <- holt(IXICts, alpha=.8, beta=.2, initial="simple", exponential=TRUE, h=5)
+plot(fitholtIXIC, ylab="Daily Closing Price", xlab="Year",col="#377EB8", main="IXIC Fit Holt Trend Method", fcol="red")
+abline(v = 1997, untf = FALSE, col = "red")
+accuracy(fitholtIXIC)
+fitholtIXIC$model
+
+Index <- cbind(DJI, GSPC, IXIC)
+
+```
+
+```{r}
+regfit.full = regsubsets(DJI~., SP500, nvmax = 30)
+reg.summary <- summary(regfit.full)
+plot(reg.summary$rsq, xlab = "Number of Companies", ylab = "RSquare", type = "1")
+```

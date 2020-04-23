@@ -1,0 +1,57 @@
+###When to give our offers 
+
+### Investitage if there are peak buying seasons based on item ids
+
+## MySQL provides functions for date manipulation 
+
+select 
+date_format(OrderDate, "%b") as OrderMonth ,
+round(avg(ol.Quantity*ol.PricePerQty),2) as AvgSpend
+ from 
+OrderHeader as oh ,
+OrderLine as ol 
+where 
+oh.OrderNumber=ol.OrderHeader_OrderNumber
+group by
+OrderMonth
+order by AvgSpend desc;
+
+
+
+### Lets assign labels to months as Summer  or Holidays or Others
+select 
+date_format(OrderDate, "%b") as OrderMonth ,
+if (date_format(OrderDate, "%b") in ('Nov','Dec'),'Holidays',  if(date_format(OrderDate, "%b") in ('Jun','Jul','Aug','Sep'),'Summer','Other')      )  as Season ,
+(ol.Quantity*ol.PricePerQty) as  LineTotal
+ from 
+OrderHeader as oh ,
+OrderLine as ol 
+where 
+oh.OrderNumber=ol.OrderHeader_OrderNumber;
+
+## Calculate the Average Spend by Month 
+
+
+
+
+### Lets look for avg spend by these Seasons 
+select 
+if (date_format(OrderDate, "%b") in ('Nov','Dec'),'Holidays',  if(date_format(OrderDate, "%b") in ('Jun','Jul','Aug','Sep'),'Summer','Other')      )  as Season ,
+round(avg(ol.Quantity*ol.PricePerQty),2 ) as AvgSpend
+ from 
+OrderHeader as oh ,
+OrderLine as ol 
+where 
+oh.OrderNumber=ol.OrderHeader_OrderNumber
+group by 
+Season
+order by 
+AvgSpend;
+
+
+
+
+
+#### Are there any trends to show the most popular item category across the various seasons. Calc the avg $$ spend across each item category by season
+
+
