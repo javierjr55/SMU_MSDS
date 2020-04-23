@@ -1,0 +1,178 @@
+---
+title: "JSaldana_LiveSession4assignment"
+author: "Javier Saldana"
+date: "September 20, 2018"
+output: html_document
+---
+MSDS 6306: Doing Data Science
+
+Live session Unit 04 assignment 
+
+Due: Sunday September 23rd 11:59pm  
+
+Submission 
+ALL MATERIAL MUST BE KNITTED INTO A SINGLE, LEGIBLE, AND DOCUMENTED HTML DOCUMENT. Use RMarkdown to create this file. Formatting can be basic, but it should be easily human-readable. Unless otherwise stated, please enable {r, echo=TRUE} so your code is visible. 
+
+TIPS: If you are having problems with scraping, go to the website to check if it is online. If it is, then take a look at the actual website to verify how it is structured. Feel free to use View Source to narrow down good nodes to use. You are welcome to use any R libraries for this assignment. Off the top of my head, good ones to use might be rvest, dplyr, tidyr, ggplot2, reshape2, or stringr. You don’t need to include install.packages for your final code, but you need library() for each. 
+
+Questions 
+	
+	1. Harry Potter Cast (50%) 
+	a. In the IMDB, there are listings of full cast members for movies. Navigate to http://www.imdb.com/title/tt1201607/fullcredits?ref_=tt_ql_1. Feel free to View Source to get a good idea of what the page looks like in code. 
+	
+	
+	b. Scrape the page with any R package that makes things easy for you. Of particular interest is the table of the Cast in order of crediting. Please scrape this table (you might have to fish it out of several of the tables from the page) and make it a data.frame() of the Cast in your R environment 
+	
+```{r echo=TRUE}
+#calling all libraries/packages required
+library(XML)
+library(dplyr)
+library(tidyr)
+library(stringi)
+library(rvest)
+library(ggplot2)
+library(RCurl)
+
+#source webpage
+webpage <- read_html("http://www.imdb.com/title/tt1201607/fullcredits?ref_=tt_ql_1")
+
+#store html scrapped data as data frame
+df <- html_nodes(webpage, "td") %>% html_text() %>% matrix(ncol = 2, byrow = TRUE) %>% data.frame(stringsAsFactors = FALSE)
+```
+	
+	
+	c. Clean up the table • It should not have blank observations or rows, a row that should be column names, or just ‘…’ 
+	
+	• It should have intuitive column names (ideally 2 to start – Actor and Character) 
+	
+	• In the film, Mr. Warwick plays two characters, which makes his row look a little weird. Please replace his character column with just “Griphook / Professor Filius Flitwick” to make it look better. 
+	
+	• One row might result in “Rest of cast listed alphabetically” – remove this observation. 
+```{r echo=TRUE}
+#begin data clean up; delete rows other than cast
+df <- df[-c(315:3715),]
+df <- df[-c(1:5),]
+
+#half of cast and characters are in column 1 and other half in column 2
+#breaking up data
+half.1 <- as.data.frame(df$X1)
+half.2 <- as.data.frame(df$X2)
+
+#delete unwanted observations outside of cast/characters
+half.1 <- half.1[-c(1:183),]
+half.1 <- as.data.frame(half.1)
+
+half.2 <- half.2[-c(183:309),]
+half.2 <- as.data.frame(half.2)
+
+#change names of columns to match for join
+names(half.1) <- "X"
+names(half.2) <- "X"
+
+#stack half.2 above half.1 because half.2 represents first entires based on HTML
+new.df <- rbind(half.2, half.1)
+#new.df <- as.data.frame(new.df)
+
+#currently, the column has the values as actor, character, actor...
+#we need to make a new column and move the characters to separate them from the actors
+char_df <- new.df[seq(2, nrow(new.df), 2), ]
+act_df <- new.df[seq(1, nrow(new.df), 2), ]
+
+char_df <- as.data.frame(char_df)
+act_df <- as.data.frame(act_df)
+
+#now we bind both newly created data frames into one again
+#this method is only recommended when the rows are exact and values are in order
+hp.df <- cbind(act_df, char_df)
+#test <- gsub("//n", "", hp.df, fixed = TRUE)
+#test <- as.data.frame(test)
+```
+	
+	d. Split the Actor’s name into two columns: FirstName and Surname. Keep in mind that some actors/actresses have middle names as well. Please make sure that the middle names are in the FirstName column, in addition to the first name (example: given the Actor Frank Jeffrey Stevenson, the FirstName column would say “Frank Jeffrey.”) 
+	
+```{r echo=TRUE}
+sep.names <- act_df %>% separate(act_df, c("1", "2", "3", "4", "5", "6", "7"), extra = "merge", fill = "left")
+
+hp.df
+
+#lst.nms <- sep.names$`6`
+#frst.nms <- cbind(`1`,`2`,`3`,`4`,`5`)
+#Unable to remove NAs from data set. I attempted to use na.omit and na.rm and coul not get a data.frame without having NA in front of the first name.
+
+#In addition, had trouble using separate function thanks to whitespace. I humbly conceed to R in this example.
+```
+
+	
+	e. Present the first 10 rows of the data.frame() – It should have only FirstName, Surname, and Character columns. 
+
+	2. SportsBall (50%)
+	a. On the ESPN website, there are statistics of each NBA player. Navigate to the San Antonio Spurs current statistics (likely http://www.espn.com/nba/team/stats/_/name/sa/san-antonio-spurs). You are interested in the Shooting Statistics table. 
+	b. Scrape the page with any R package that makes things easy for you. There are a few tables on the page, so make sure you are targeting specifically the Shooting Statistics table.
+	
+```{r echo=TRUE}
+
+library(XML)
+library(dplyr)
+library(tidyr)
+library(stringi)
+library(rvest)
+library(ggplot2)
+library(RCurl)
+
+spurs <- read_html("http://www.espn.com/nba/team/stats/_/name/sa/san-antonio-spurs")
+
+spurs_table <- html_nodes(spurs, "table")
+spurs.lists <- html_table(spurs_table, fill = TRUE)
+spurs.df <-data.frame(spurs.lists[[2]])
+
+```
+	
+c. Clean up the table (You might get some warnings if you’re working with tibbles)
+  • You’ll want to create an R data.frame() with one observation for each player. Make sure that you do not accidentally include blank rows, a row of column names, or the Totals row in the table as observations. 
+  
+```{r echo=TRUE}
+#row names are located in row 2
+#so we make row two values become the headers
+names(spurs.df) <-spurs.df[2,]
+
+#delete first two header rows
+spurs.df <- spurs.df[-c(1:2),]
+
+#delete totals row
+spurs.df <- spurs.df[-c(15),]
+```
+  
+	• The column PLAYER has two variables of interest in it: the player’s name and their position, denoted by 1-2 letters after their name. Split the cells into two columns, one with Name and the other Position. 
+	
+```{r echo=TRUE}
+#separate the position from the name in the first col
+spurs.df <- separate(spurs.df, PLAYER, into = c("NAME", "POSITION"), sep = ",")
+```	
+	
+	• Check the data type of all columns. Convert relevant columns to numeric. Check the data type of all columns again to confirm that they have changed! 
+```{r echo=TRUE}
+#check data type of all columns
+sapply(spurs.df, mode)
+
+#convert all columns except name and position to numeric
+spurs.df[, c(3:16)] <- sapply(spurs.df[,c(3:16)], as.numeric)
+
+#verify columns with numerical values are numeric data types
+sapply(spurs.df, mode)
+```
+	
+d. Create a colorful bar chart that shows the Field Goals Percentage Per Game for each person. It will be graded on the following criteria. 
+  • Informative Title, centered 
+	• Relevant x and y axis labels (not simply variables names!) 
+	• Human-readable axes with no overlap (you might have to flip x and y to fix that). Note: You do not have to convert the decimal to a percentage. 
+	• Color the columns by the team member’s position (so, all PF’s should have the same color, etc.) 
+	
+```{r echo=TRUE}
+#create bar plot w/ titles, legend, colors by pos, and readable labels
+ggplot(data = spurs.df, aes(x=spurs.df$'NAME', y=spurs.df$`FG%`)) + geom_bar(stat = "identity", aes(fill = spurs.df$POSITION)) + xlab("Spurs Roster (2017 - 2018)") + ylab("Field Goal Percentage") + ggtitle("Field Goal Percentage Per Game By Position (2017 - 2018)") + guides(fill=guide_legend(title = "Position")) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+	
+Reminder 
+To complete this assignment, please submit one RMarkdown and matching HTML file.  Please submit all files at the same time; only one submission is granted. 
+Good luck!
+
