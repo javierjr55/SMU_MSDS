@@ -1,0 +1,149 @@
+---
+title: "JSaldana_LiveSession6assignment"
+author: "Javier Saldana"
+date: "October 4, 2018"
+output: html_document
+---
+
+ MSDS 6306: Doing Data Science 
+
+Live session Unit 6 assignment 
+
+Due: Monday October 8th at 11:59pm 
+
+Submission 
+ALL MATERIAL MUST BE KNITTED INTO A SINGLE, LEGIBLE, AND DOCUMENTED HTML DOCUMENT. Use RMarkdown to create this file. Formatting can be basic, but it should be easily human-readable. Unless otherwise stated, please enable {r, echo=TRUE} so your code is visible. 
+
+Questions 
+
+Background: Your organization is responsible for building new VA hospitals in the mainland of the United States. You are a little overwhelmed by the prospect, not sure which places need the most help. You decide to begin by exploring healthcare facility data recorded by the U.S. Government. 
+
+Disclaimer: While these are real data, the assignment is not an endorsement for any particular position on medical affairs or building hospitals. It is for instructional use only. 
+	
+	1. Mental Health Clinics (40%) 
+	a. This data set is a survey of every known healthcare facility that offers mental health services in the United States in 2015. Navigate to https://datafiles.samhsa.gov/study-dataset/national-mental-health-services-survey-2015-n-mhss-2015-ds0001-nid17098 and select the R download. Look through the codebook PDF for an explanation on certain variables. Upon opening the RDA file, the data set should be inserted into your global environment, which you can then reference. 
+	
+	b. Please create code which lists the State abbreviations without their counts, one abbreviation per State value. It does not have to be in data frame format. A vector is fine. 
+
+```{r, echo=TRUE}
+library(dplyr)
+library(ggplot2)
+
+#This RMarkdown assumes the data set is already in the global environment
+load(file = "C:/Users/javie/Downloads/N-MHSS-2015-DS0001-bndl-data-r/N-MHSS-2015-DS0001-data/N-MHSS-2015-DS0001-data-r.rda")
+
+#store the unique state values into 
+state <- as.data.frame(unique(mh2015_puf$LST))
+
+#give data set a column name
+state <- `colnames<-`(state, "Abbrev")
+
+str(state)
+```
+
+	c. Filter the data.frame from 1A. We are only interested in the Veterans Administration (VA) medical centers in the mainland United States-create a listing of counts of these centers by state, including only mainland locations. Alaska, Hawaii, and U.S. territories should be omitted. DC, while not a state, is in the mainland, so it should remain included. Convert this to data.frame() 
+	
+```{r, echo=TRUE}
+#convert from integer to character and delete white space
+mh2015_puf$LST <- as.character(trimws(mh2015_puf$LST))
+
+#filter out hospitals outside of US mainland
+va.ml <- mh2015_puf %>% filter(!LST %in% c("HI", "VI", "AS", "GU", "AK", "PR"))
+
+#convert to data frame
+va.ml <- as.data.frame(va.ml)
+```
+
+	d. Create a ggplot barchart of this filtered data set. Vary the bar's colors by what State it has listed. Give it an appropriately professional title that is centered. Make sure you have informative axis labels. The State axis should be readable, not layered over each other. You're welcome to have a legend or not. 
+
+```{r, echo=TRUE}
+ggplot(va.ml, aes(x = LST, fill=LST)) + #select data to plot
+  geom_bar() + #plot bar graph
+  theme_bw() + #select theme
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5)) + #remove legend and center title
+  labs(x = "Location", y = "Number of VA Hospitals", title = "VA Hospitals Across American Mainland") + #add labels to axis and title
+  coord_flip()
+```
+
+	2. Cleaning and Bringing in New Features (60%) 
+
+a. This graph (1D) might be somewhat misleading, as bigger states may have more hospitals, but could be more sparsely located. Read statesize.csv into your R environment. This contains essentially a vector of square miles for each state. In trying to merge it with your data.frame() from 1C, you find that they don't match. Use paste() on your LST column in 1C to see what the matter is, and write what you observe in a comment. 
+
+```{r, echo=TRUE}
+#Bring in state size data
+area.state <- read.csv(file.choose())
+
+#attempt to merge using paste
+test <- paste(va.ml$LST, area.state, sep = "")
+
+head(test)
+
+#Values were all converted to numeric values and lost its meaning (readability)
+#It might be better to ensure both joining columns are same data type before joining
+#furthermore, the data includes Hawaii and Alaska, which are not mainland states
+
+```
+
+	b. Correct the problem with the LST column using any method in R that is programmatic and easily understandable. Once you have made these state abbreviations identical to statesize.csv's Abbrev column, merge the data.frame() from 1C and statesize.csv in order to add size information. 
+	
+```{r, echo=TRUE}
+#data set doesn't include DC so we must add it
+#DC was added to South region since it is south of MD, which is also South
+
+#Give DC its own data fram and prepare to merge
+dc <- data.frame("District of Columbia", "68", "DC", "South")
+names(dc) <- c("StateName", "SqMiles", "Abbrev", "Region")
+
+#Merge DC to data set statesize
+new.st.sz <- rbind.data.frame(area.state, dc)
+
+
+#Removing Hawaii and Alaska from data set ince they are not mainland
+new.st.sz <- new.st.sz %>% filter(!Abbrev %in% c("HI", "AK"))
+
+#merged dats sets
+va.ml <- merge(va.ml, new.st.sz, by.x = "LST", by.y = "Abbrev")
+```
+	
+	c. Calculate a new variable in your combined data.frame() which indicates the VA hospitals per thousand square miles. 
+	
+```{r, echo=TRUE}
+#Count state instances into new column
+va.ml <- va.ml %>% add_count(LST)
+
+#convert into integers for calculations
+va.ml$n <- as.integer(va.ml$n)
+va.ml$SqMiles <- as.integer(va.ml$SqMiles)
+
+#hospital per 1,000 square miles calculation
+va.ml$PerSqMile <- (va.ml$n/va.ml$SqMiles)*1000
+```
+	
+d. Create another ggplot which considers the VAs per square thousand miles, rather than just frequency. . Make sure the State axis is readable, like before. Change the title and axes as appropriate. 
+
+```{r, echo=TRUE}
+ggplot(va.ml, aes(x = reorder(LST, PerSqMile), y = PerSqMile, fill=Region)) + #select data to plot
+  geom_bar(stat = "unique") + #plot bar graph
+  theme_bw() + #select theme
+  theme(plot.title = element_text(hjust = 0.5)) + #remove legend and center title
+  labs(x = "State/District", y = "Number of VA Hospitals/1000 squared miles", title = "VA Hospital Density Across American Mainland") + #add labels to axis and title
+  coord_flip()
+```
+
+	. Modify the ggplot syntax to make your bars in descending order (there are StackOverflow topics for this, and I have demonstrated how in Live Coding in prior classes). 
+	. Color-code the bars based on Region (see the merged data.frame)-however, change the color scheme from the default. Any set of colors is fine, so long as it is readable. 
+	. Keep the legend-you should have four regions and therefore four colors. 
+	
+	e. What patterns do you see? By this metric, is there any region that seems relatively high for VA medical centers per thousand square miles? How about low? Given these data, what advice might you give your boss before you start modeling (and why)? 
+	
+
+The plot displayed above has an anomily in it. The results for DC are overinflated based on the current metric in place. Even the smallest state (Rhode Island) has over 1,000 squared miles. DC is comprised of 68 squared miles and has 38 VA hospitals in it. When adjusted for 1000 squared miles, that number is inflated to 558 hospitals/1000 squared miles. Although it clearly doesn't have 558 VA hospitals, it does have the higest concetration of VA hospitals/squared mile. 
+
+Nevertheless, it appears the Northeast region is the region that contains the highest number of VA hospitals/1000 squared miles. This is something that could be attributed to population density in the region. It's clear the northeast region has a higher population density than any other region in the US mainland. As far as the lowest VA hospital density, the graph shows the West is the least dense region regarding VA hospitals per 1000 square miles.
+
+My advice regarding the new VA hospital would be to conduct further exploratory research concerning demand in the regions. The data provided only gives us information pertaining to the "supply" of VA hospitals, however it doesn't speak much to the current demand stressors. This research would allow us to precisely determine where a new VA hospital would provide greater impact to the demand of VA services. 
+
+
+Reminder 
+To complete this assignment, please submit one RMarkdown and matching HTML file at least one hour before your live session. Please submit all files at the same time; only one submission is granted. 
+Good luck!
