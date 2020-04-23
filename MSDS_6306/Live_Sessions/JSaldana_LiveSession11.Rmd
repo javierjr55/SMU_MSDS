@@ -1,0 +1,370 @@
+---
+title: "Unit 10 & 11 Live Session Assignment"
+author: "Javier Saldana"
+date: "November 11, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Due: Monday November 12th at 11:59 PM
+
+Submission 
+ALL MATERIAL MUST BE KNITTED INTO A SINGLE, LEGIBLE, AND DOCUMENTED HTML DOCUMENT. Use RMarkdown to create this file. Formatting can be basic, but it should be easily human-readable. Unless otherwise stated, please enable {r, echo=TRUE} so your code is visible. 
+
+Questions
+
+Background: Brewmeisters in Colorado and Texas have teamed up to analyze the relationship between ABV and IBU in each of their states.  Use the data sets from the project to help them in their analysis.  There three main questions of interest are 1) Is there a significant linear relationship between ABV (response) and IBU (explanatory), 2) Is this relationship different between beers in Colorado and Texas and 3) Is there a significant quadratic component in this relationship for either Colorado or Texas or both?  
+
+##I. KNN Regression versus Linear Regression 
+###A. Clean an prepare the data:
+####Create column for brewery ID that is common to both datasets similar to what you did in the project. So we can merge!
+```{r}
+library(RCurl)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(class)
+library(caret)
+library(jsonlite)
+library(RTextTools)
+library(gmodels)
+library(caTools)
+
+Breweries = read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6306_CaseStudy1/master/Breweries.csv"), head = TRUE, sep = ",", row.names = NULL)
+Beers = read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/MSDS_6306_CaseStudy1/master/Beers.csv"), head = TRUE, sep = ",", row.names = NULL)
+
+colnames(Breweries)[1] <- "Brewery_id" #change column name to use as merge variable
+
+```
+
+
+####Merge the beer and brewery data into a single dataframe.
+```{r}
+Beer.Breweries <- merge(Beers, Breweries, by = "Brewery_id") #merge by brewery_id
+
+names(Beer.Breweries)[2] <- "Beer Name" #clean up column name for beer
+names(Beer.Breweries)[8] <- "Brewery Name" #clean up column name for brewer
+```
+
+
+####Clean the State Column . get rid of extraneous white space.  
+```{r}
+#getting rid of whitespace
+Beer.Breweries$State <- trimws(Beer.Breweries$State)
+```
+
+
+####Create One Dataset that has only Colorado and Texas beers and no IBU NAs . name it "beerCOTX"
+```{r}
+#filter to only TX and CO
+beerCOTX <- Beer.Breweries %>% filter(State %in% c("TX", "CO")) %>% filter(!is.na(IBU))
+
+#convert to data frame
+beerCOTX <- as.data.frame(beerCOTX)
+```
+
+
+####Order beerCOTX by IBU (ascending) ... this will be important later in graphing
+```{r}
+#order by IBU (ascending)
+beerCOTX <- beerCOTX[order(beerCOTX$IBU),]
+```
+
+###B. Compare two competing models: External Cross Validation
+####For this assignment we will concentrate only on the Texas data!  Create a training and test set from the data (60%/40% split respectively).  Print a summary of each new data frame. there should be two: TrainingTX, TestTX.  
+```{r}
+#random training set and test set for TX Data
+beerTX = filter(beerCOTX,State == "TX")
+dim(beerTX) #ensure it has 89 values
+beerTX$rand_number = runif(89,0,1) #randomly get values
+TrainTX = beerTX[beerTX$rand_number < .6,] #create training set
+TestTX = beerTX[beerTX$rand_number > .6,] #create test set
+size_testTX = dim(TestTX)[1] #number of rows
+summary(TrainTX)
+summary(TestTX)
+```
+####Using the training data, fit a KNN regression model to predict ABV from IBU.  You should use the knnreg function in the caret package.  Fit two separate models: one with k = 3 and one with k = 5.  (This is 2 models total.)  
+```{r}
+### KNN Regression
+train = data.frame(x1 = TrainTX$IBU, x2 = TrainTX$IBU, y = TrainTX$ABV)
+test = data.frame(x1 = TestTX$IBU, x2 = TestTX$IBU, y = TestTX$ABV)
+
+fit3 =  knnreg(x = train[,c(1,1)], y = train$y, k = 3) #knn k=3
+fit5 =  knnreg(x = train[,c(1,1)], y = train$y, k = 5) #knn k=5
+
+pred.k3 = predict(fit3,test[,c(1,1)]) #predictions k=3
+
+pred.k5 = predict(fit5,test[,c(1,1)]) #predictions k=5
+```
+####Use the ASE loss function and external cross validation to provide evidence as to which model (k = 3 or k = 5) is more appropriate.  Remember your answer should be supported with why you feel a certain model is appropriate.  Your analysis should include the average squared error (ASE) for each model from the test set.  Your analysis should also include a clear discussion, using the ASEs, as to which model you feel is more appropriate. 
+
+```{r}
+#Calculate the RMSE loss function for both models
+RMSE3 = RMSE(pred.k3, test$y)
+
+RMSE5 = RMSE(pred.k5, test$y)
+```
+In this instance, the k-Nearest Neighbor model (k = 3) produces a Root Mean Squared Error (RMSE) of `r RMSE3`, while the other model (k = 5) produces a RMSE of `r RMSE5`. Considering the KNN model (k = 3) has a lower RMSE, it would be the most appropriate model for this analysis. 
+
+
+####Now use the ASE loss function and external cross validation to provide evidence as to which model (the linear regression model from last week or the "best" KNN regression model from this week (from question 10)) is more appropriate. 
+
+```{r}
+size_TestTX = dim(TestTX)[1]
+#fit the first model to the training set
+fit.TX = lm(ABV~IBU, data = TrainTX)
+#get predictions for the test data from the model fit on the training data
+predsTX = predict(fit.TX,newdata = data.frame(IBU = TestTX$IBU))
+#Calculate the RMSE loss function
+RMSETX = sqrt(sum((TestTX$ABV - predsTX)^2)/size_TestTX) # 34 is the size of the test set.
+
+```
+The KNN model (k = 3) provides us a RMSE of `r RMSE3` while the linear model provides a RMSE of `r RMSETX`. Based on these results, it is evident that the linear model is  "better" fit.
+
+
+####Use your "best" KNN regression model to predict the ABV for an IBU of 150, 170 and 190.  What issue do you see with using KNN to extrapolate?   
+
+Using KNN to extrapolate presents an accuracy issue since the model was not refined to account for such values. The model would be most accurate within the range of the "normal"" values. The model produces the same ABV value for IBU scores of 150, 170, and 190.
+```{r}
+test1 <- as.data.frame(c(150, 170, 190))
+knn(train$x1,test1,train$y, k = 3)
+```
+
+##II. KNN Classification  
+
+###We would like to be able to use ABV and IBU to classify beers between 3 styles: American IPA and American Pale Ale.  
+
+
+####Filter the beerCOTX dataframe for only beers that are from Texas and are American IPA and American Pale Ale.
+```{r}
+NewBeerTX <- beerCOTX %>% filter(State %in% c("TX")) %>% filter(Style == "American IPA" | Style == "American Pale Ale (APA)")
+```
+
+####Divide this filtered data set into a training and test set (60/40, training / test split).  
+```{r}
+#random training set and test set for TX Data
+beerTX = filter(beerCOTX,State == "TX")
+NewBeerTX$rand_number = runif(18,0,1) #randomly assign values
+TrainNewTX = NewBeerTX[NewBeerTX$rand_number < .6,] #create training set
+TestNewTX = NewBeerTX[NewBeerTX$rand_number > .6,] #create test set
+size_TestNewTX = dim(TestNewTX)[1] #number of rows
+summary(TrainNewTX)
+summary(TestNewTX)
+```
+
+####Use the class package's knn function to build an KNN classifier with k = 3 that will use ABV and IBU as features (explanatory variables) to classify Texas beers as American IPA or American Pale Ale using the Training data.  Use your test set to create a confusion table to estimate the accuracy, sensitivity and specificity of the model. 
+```{r}
+
+new.train = data.frame(IBU = TrainNewTX$IBU, ABV = TrainNewTX$ABV)
+new.train.labels = droplevels(TrainNewTX$Style)
+
+new.test = data.frame(IBU = TestNewTX$IBU, ABV = TestNewTX$ABV)
+new.test.labels = droplevels(TestNewTX$Style)
+
+NewBeerTX_pred <- as.data.frame(knn(train = new.train, test = new.test, cl = new.train.labels, k=3))
+
+new.test.labels = as.data.frame(new.test.labels)
+
+tab1 <- table(NewBeerTX_pred$`knn(train = new.train, test = new.test, cl = new.train.labels, k = 3)`,droplevels(TestNewTX$Style))
+
+confusionMatrix(tab1)
+
+```
+
+
+####Using the same process as in the last question, find the accuracy, sensitivity and specificity of a KNN model with k = 5.  Which is "better"?  Why?
+
+Considering both models obtained perfect results, we would be skeptical to take the model at 100% accuracy. It appears the sample size was too small and it would be ideal to expand it furhter in order to refine the model.
+```{r}
+NewBeerTX_pred <- as.data.frame(knn(train = new.train, test = new.test, cl = new.train.labels, k=5))
+tab2 <- table(NewBeerTX_pred$`knn(train = new.train, test = new.test, cl = new.train.labels, k = 5)`,droplevels(TestNewTX$Style))
+
+confusionMatrix(tab2)
+```
+
+
+######BONUS (5 pts total): We did not have a lot data to build and test this classifier.  Check out the class package's knn.cv function that will perform leave-one-out cross validation.  What is leave-one-out CV (2pts)?  Get the accuracy metric for from this function for both the k = 3 and k = 5 KNN classifiers (2pts).  Which model is suggested by the leave-one-out CV method (1pt)?    
+
+
+
+#Unit 11 Questions  
+###Use the most updated code that is zipped with this.  It fixes the grep problem by pasting a string with bracketed regular expression.   I think someone mentioned this in class.  Good call!  
+
+###Use the "snippet" instead of the headline.  
+
+###Look at data from 1989 to 1999  
+```{r}
+NYTIMES_KEY = "dee598cdc6fe4846933d1793f3cefe23";
+
+# Let's set some parameters
+term <- "central+park+jogger" # Need to use + to string together separate words
+begin_date <- "19890101"
+end_date <- "19991231"
+
+baseurl <- paste0("http://api.nytimes.com/svc/search/v2/articlesearch.json?q=",term,
+                  "&begin_date=",begin_date,"&end_date=",end_date,
+                  "&facet_filter=true&api-key=",NYTIMES_KEY, sep="")
+
+initialQuery <- jsonlite::fromJSON(baseurl)
+maxPages <- round((initialQuery$response$meta$hits[1] / 10)-1)
+
+for(i in 1:100000000)
+{  
+  j = (i + 1 -1 )/i 
+}
+
+pages <- list()
+for(i in 0:maxPages){
+  nytSearch <- jsonlite::fromJSON(paste0(baseurl, "&page=", i), flatten = TRUE) %>% data.frame() 
+  message("Retrieving page ", i)
+  pages[[i+1]] <- nytSearch 
+  Sys.sleep(1) 
+}
+
+
+allNYTSearch <- rbind_pages(pages)
+
+
+# Visualize coverage by section
+allNYTSearch %>% 
+  group_by(response.docs.type_of_material) %>%
+  dplyr::summarize(count=n()) %>%
+  mutate(percent = (count / sum(count))*100) %>%
+  ggplot() +
+  geom_bar(aes(y=percent, x=response.docs.type_of_material, fill=response.docs.type_of_material), stat = "identity") + coord_flip()
+
+```
+
+
+####To provide external cross validation (50%-50%).  Create a training and test set from the total number of articles.  Train the classifier on the training set and create your confusion matrix from the test set. Make sure and provide the confusion matrix.
+```{r}
+
+#Make another column of News versus Other ... The labels
+
+allNYTSearch$NewsOrOther = ifelse(allNYTSearch$response.docs.type_of_material == "News","News","Other")
+
+ind = sample.split(Y = allNYTSearch$NewsOrOther, SplitRatio = 0.5)
+trainNYT = allNYTSearch[ind,]
+testNYT = allNYTSearch[!ind,]
+
+
+#This function returns P(News | Keyword) 
+#P(News|KW) = P(KW|News)* P(News) / P(KW)
+Pnews_word = function(key_word = "jogging", trainNYT)
+{
+  #print(key_word)
+  NewsGroup = trainNYT[trainNYT$NewsOrOther == "News",]
+  OtherGroup = trainNYT[trainNYT$NewsOrOther == "Other",]
+  
+  pNews = dim(NewsGroup)[1] / (dim(NewsGroup)[1] + dim(OtherGroup)[1])
+  pOther = 1 - pNews
+  
+  pKWGivenNews = length(grep(paste("\\b",key_word,"\\b",sep=""),NewsGroup$response.docs.snippet,ignore.case = TRUE))/dim(NewsGroup)[1]
+  pKWGivenOther = length(grep(paste("\\b",key_word,"\\b",sep=""),OtherGroup$response.docs.snippet,ignore.case = TRUE))/dim(OtherGroup)[1]
+  
+  pKW = length(grep(paste("\\b",key_word,"\\b",sep=""),trainNYT$response.docs.snippet,ignore.case = TRUE))/dim(trainNYT)[1]
+  
+  pNewsGivenKW = pKWGivenNews*pNews/pKW
+  pOtherGivenKW = pKWGivenOther*pOther/pKW
+  
+  return(pNewsGivenKW)
+}
+
+theScoreHolderNews = c()
+theScoreHolderOthers = c()
+articleScoreNews = 0;
+articleScoreOther = 0;
+
+
+for (i in 1 : dim(allNYTSearch)[1])  #This loop iterates over the articles
+{
+  
+  articleScoreNews = 0; 
+  articleScoreOther = 0;
+  #strsplit(gsub("[^[:alnum:] ]", "", str), " +")
+  #strsplit(allNYTSearch$response.docs.headline.main[i],split = " ")
+  theText = unlist(strsplit(gsub("[^[:alnum:] ]", "", allNYTSearch$response.docs.snippet[i]), " +"))
+  for(j in 1 : length(theText))  #This loop iterates over the snippet (each word)
+  {
+    articleScoreNews = articleScoreNews + Pnews_word(theText[j],allNYTSearch)
+    articleScoreOther = articleScoreOther + (1 - Pnews_word(theText[j],allNYTSearch))
+  }
+  theScoreHolderNews[i] = articleScoreNews
+  theScoreHolderOthers[i] = articleScoreOther
+}
+
+# Classify the aricle as News or Other based on a given piece of information from the article.
+allNYTSearch$Classified = ifelse(theScoreHolderNews > theScoreHolderOthers,"News","Other")
+
+```
+
+####Provide accuracy, sensitivity and specificity from the confusion matrix.  You may consider News to be the positive.
+```{r}
+#Confusion Matrix
+tab3 <- table(allNYTSearch$NewsOrOther,allNYTSearch$Classified)
+confusionMatrix(tab3)
+```
+####Use your statistics from the last two questions to assess whether the headline or the snippet makes for a better classifier.  
+```{r}
+#This function returns P(News | Keyword) 
+#P(News|KW) = P(KW|News)* P(News) / P(KW)
+Pnews_word = function(key_word = "jogging", trainNYT)
+{
+  #print(key_word)
+  NewsGroup = trainNYT[trainNYT$NewsOrOther == "News",]
+  OtherGroup = trainNYT[trainNYT$NewsOrOther == "Other",]
+  
+  pNews = dim(NewsGroup)[1] / (dim(NewsGroup)[1] + dim(OtherGroup)[1])
+  pOther = 1 - pNews
+  
+  pKWGivenNews = length(grep(paste("\\b",key_word,"\\b",sep=""),NewsGroup$response.docs.headline.main,ignore.case = TRUE))/dim(NewsGroup)[1]
+  pKWGivenOther = length(grep(paste("\\b",key_word,"\\b",sep=""),OtherGroup$response.docs.headline.main,ignore.case = TRUE))/dim(OtherGroup)[1]
+  
+  pKW = length(grep(paste("\\b",key_word,"\\b",sep=""),trainNYT$response.docs.headline.main,ignore.case = TRUE))/dim(trainNYT)[1]
+  
+  pNewsGivenKW = pKWGivenNews*pNews/pKW
+  pOtherGivenKW = pKWGivenOther*pOther/pKW
+  
+  return(pNewsGivenKW)
+}
+
+theScoreHolderNews = c()
+theScoreHolderOthers = c()
+articleScoreNews = 0;
+articleScoreOther = 0;
+
+
+for (i in 1 : dim(allNYTSearch)[1])  #This loop iterates over the articles
+{
+  
+  articleScoreNews = 0; 
+  articleScoreOther = 0;
+  #strsplit(gsub("[^[:alnum:] ]", "", str), " +")
+  #strsplit(allNYTSearch$response.docs.headline.main[i],split = " ")
+  theText = unlist(strsplit(gsub("[^[:alnum:] ]", "", allNYTSearch$response.docs.headline.main[i]), " +"))
+  for(j in 1 : length(theText))  #This loop iterates over the snippet (each word)
+  {
+    articleScoreNews = articleScoreNews + Pnews_word(theText[j],allNYTSearch)
+    articleScoreOther = articleScoreOther + (1 - Pnews_word(theText[j],allNYTSearch))
+  }
+  theScoreHolderNews[i] = articleScoreNews
+  theScoreHolderOthers[i] = articleScoreOther
+}
+
+# Classify the aricle as News or Other based on a given piece of information from the article.
+allNYTSearch$Classified = ifelse(theScoreHolderNews > theScoreHolderOthers,"News","Other")
+
+#Confusion Matrix
+tab4 <- table(allNYTSearch$NewsOrOther,allNYTSearch$Classified)
+confusionMatrix(tab4)
+
+```
+
+Reminder 
+To complete this assignment, please submit one RMarkdown and matching HTML file by the deadline. Please submit all files at the same time; only one submission is granted. 
+Good luck!
+
