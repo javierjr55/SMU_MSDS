@@ -1,0 +1,136 @@
+---
+title: "JSaldana_LiveSession12"
+author: "Javier Saldana"
+date: "November 21, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#####Warm Up: Brief Financial Data (20%)
+a.	Natively in R, you have access to sample data sets of prominent stocks over time.  We'll be using EuStockMarkets for this question.  Type help(EuStockMarkets) to learn more.  From these data, pull specifically the DAX index.  For all questions in this assignment, you're welcome to normalize (or don't!) how you see fit, but, if you choose to, please document what you're doing and why for the grader.  It's not necessary for the purpose of this assignment.  
+```{r}
+library(fpp)
+library(fpp2)
+library(RCurl)
+library(xts)
+library(dygraphs)
+data("EuStockMarkets")
+```
+
+b.	These are annual European Stock Data from 1990 onward.  Create a rudimentary plot of the data.  Make the line blue.  Give an informative title.  Label the axes accurately.  In 1997, an event happened you want to indicate; add a vertical red line to your plot which divides pre-1997 and post-1997 information.  
+```{r}
+plot(EuStockMarkets[,"DAX"], main = "DAX Price Index (1991 - 1999)", xlab = "Year", ylab = "Price", col = "Blue") #plotting DAX prices
+abline(v = 1997, col = "Red") #Line dividing pre-1997
+abline(v = 1998, col = "Red") #Line dividing post-1997
+```
+
+c.	Decompose the time series into its components (i.e., trend, seasonality, random).  Keep in mind that this is a multiplicative model you want.  Create a plot of all decomposed components.  As before, make all lines blue and have a vertical divider at the year 1997.  
+```{r}
+
+
+ts_DAX = ts(EuStockMarkets[,"DAX"], frequency = 260)
+decompose_DAX = decompose(ts_DAX, "multiplicative")
+plot(decompose_DAX, col = "Blue")
+abline(v = 7, col = "Red") #Line dividing pre-1997
+abline(v = 8, col = "Red") #Line dividing post-1997
+#Need to fix lines
+```
+
+
+#####2.	Temperature Data (40%)
+a.	Using the maxtemp dataset granted by loading fpp2, there are maximum annual temperature data in Celsius.  For more information, use help(maxtemp).  To see what you're looking at, execute the command in 'Examples' in the help document.  
+```{r}
+data("maxtemp")
+```
+
+b.	We are only concerned with information after 1990.  Please eliminate unwanted information or subset information we don't care about.  
+```{r}
+Temp <- window(maxtemp, 1990)
+```
+
+c.	Utilize SES to predict the next five years of maximum temperatures in Melbourne.  Plot this information, including the prior information and the forecast.  Add the predicted value line across 1990-present as a separate line, preferably blue.  So, to review, you should have your fit, the predicted value line overlaying it, and a forecast through 2021, all on one axis. Find the AICc and BIC of this fitted model.  You will use that information later.  
+```{r}
+fit <- ses(Temp, h = 5, alpha = 0.05, initial = "optimal") #fit model w/ 5 year mean forecast
+plot(Temp,ylab = "Max Temp (Celsius)", xlab = "Year", type = "o", xlim = c(1990, 2022)) #plot historical temp
+lines(fitted(fit), col = "blue", type = "o") #plot fit model
+lines(fit$mean, col = "blue", type = "o") #plot forecast
+```
+
+d.	Now use a damped Holt's linear trend to also predict out five years.  Make sure initial="optimal."  As above, create a similar plot to 1C, but use the Holt fit instead.  
+```{r}
+fitHolt = holt(Temp, initial = "optimal", h = 5, damped = TRUE)
+plot(Temp,ylab = "Max Temp (Celsius)", xlab = "Year", type = "o", xlim = c(1990, 2022)) #plot historical temp
+lines(fitted(fitHolt), col = "blue", type = "o") #plot fit model
+lines(fitHolt$mean, col = "blue", type = "o") #plot forecast
+```
+
+e.	Compare the AICc and BIC of the ses() and holt() models.  Which model is better here?  
+```{r}
+summary(fit)
+summary(fitHolt)
+```
+In this instance,  the "fit" model has a lower AICc and BIC, which would indicate it is a better model. Granted, model was changed to "optimal" in order to be able to get it to run AICc and BIC.
+
+f.	Calculate and compare the ASE from the ses() and holt() models.  Which one performs better with respect to this metric?  
+However, looking into the RMSE, we see that the Holt model has a lower error value. In this instance, the Holt model performs better.
+```{r}
+#linear forecasting
+accuracy(fit)
+
+#Holt linear forecasting
+accuracy(fitHolt)
+```
+Based on the results from the output above, it appears the Holt model 
+
+#####3.	The Wands Choose the Wizard (40%)
+a.	Utilize the dygraphs library.  Read in both Unit12TimeSeries_Ollivander and _Gregorovitch.csv as two different data frames.  They do not have headers, so make sure you account for that.  This is a time series of Wands sold over years.
+```{r} 
+#import data sets
+Gregorovitch <-read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/SMU_MSDS/master/MSDS_6306/Unit12TimeSeries_Gregorovitch.csv"), header = FALSE)
+
+Ollivander <- read.csv(text = getURL("https://raw.githubusercontent.com/javierjr55/SMU_MSDS/master/MSDS_6306/Unit12TimeSeries_Ollivander.csv"), header = FALSE)
+
+#fix column names
+colnames(Gregorovitch)[1] <- "Date"
+colnames(Gregorovitch)[2] <- "Value"
+
+colnames(Ollivander)[1] <- "Date"
+colnames(Ollivander)[2] <- "Value"
+
+```
+
+b.	You don't have your information in the proper format!  In both data sets, you'll need to first convert the date-like variable to an actual Date class.
+```{r}
+#correct class of date to Date
+Gregorovitch$Date <- as.Date(Gregorovitch$Date, format = "%m/%d/%Y")
+Ollivander$Date <- as.Date(Ollivander$Date, format = "%m/%d/%Y")
+```
+c.	Use the library xts (and the xts() function in it) to make each data frame an xts object (effectively, a time series).  You'll want to order.by the Date variable.
+```{r}
+#using xts() convert to time series object and order by date
+Gregorovitch <- xts(Gregorovitch[,-1], order.by = Gregorovitch$Date)
+Ollivander <- xts(Ollivander[,-1], order.by = Ollivander$Date)
+```
+d.	Bind the two xts objects together and create a dygraph from it.  Utilize the help() index if you're stuck.
+.	Give an effective title and x/y axes.
+.	Label each Series (via dySeries) to be the appropriate wand-maker.  So, one line should create a label for Ollivander and the other for Gregorovitch.
+.	Stack this graph and modify the two lines to be different colors (and not the default ones!)  Any colors are fine, but make sure they're visible and that Ollivander is a different color than Gregorovitch.
+.	Activate a range selector and make it big enough to view.
+.	Use dyShading to illuminate approximately when Voldemort was revived and at-large: between 1995 to 1999.
+.	Enable Highlighting on the graph, so mousing over a line bolds it.
+```{r}
+#bind both time series into 1
+Wands <- cbind(Gregorovitch, Ollivander)
+
+#plot
+dygraph(Wands) %>% 
+  dyRangeSelector(height = 50) %>%
+  dySeries("Gregorovitch",label = "Gregorovitch", color = "Blue") %>%
+  dySeries("Ollivander", label = "Ollivander", color = "Red") %>%
+  dyShading(from = "1995-1-1", to = "1999-1-1") %>%
+  dyHighlight(highlightSeriesOpts = list(strokeWidth = 3, hideOnMouseOut = TRUE))
+
+
+```
